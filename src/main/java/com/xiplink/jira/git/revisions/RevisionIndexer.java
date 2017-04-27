@@ -406,17 +406,30 @@ public class RevisionIndexer {
      */
     public List<RevisionInfo> getLogEntriesByRepository(Issue issue)
             throws IndexException, IOException {
-        
+
+               String key = issue.getKey();
+               return getLogEntriesByRepository(key);
+       }
+       /**
+     * This method will return the log entries collected from Git categorized by the repository it came from. NOTE: a
+     * null map will be returned if the indexes for this plugin have not yet been initialized.
+     *
+     * @param issueKey
+     *            the issue key to get entries for.
+     * @return A map with key of repository id (long) and entry of a collections of Logs. Null if the repository has not
+     *         yet been initialized.
+     */
+    public List<RevisionInfo> getLogEntriesByRepository(String key)
+            throws IndexException, IOException {
+
         if (log.isDebugEnabled()) {
-            log.debug("Retrieving revisions for issue: " + issue.getKey());
+            log.debug("Retrieving revisions for issue: " + key);
         }
 
         if (!indexDirectoryExists()) {
             log.warn("The indexes for the Git plugin have not yet been created.");
             return null;
         }
-
-        String key = issue.getKey();
 
         final IndexReader reader = indexAccessor.getIndexReader(getIndexPath());
         IndexSearcher searcher = new IndexSearcher(reader);

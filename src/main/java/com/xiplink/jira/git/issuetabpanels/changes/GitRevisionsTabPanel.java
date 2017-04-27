@@ -6,6 +6,7 @@
 package com.xiplink.jira.git.issuetabpanels.changes;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import com.xiplink.jira.git.revisions.RevisionInfo;
 import org.apache.log4j.Logger;
 
 import com.atlassian.core.util.collection.EasyList;
+import com.atlassian.jira.issue.changehistory.ChangeHistoryManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.action.IssueActionComparator;
 import com.atlassian.jira.issue.tabpanels.GenericMessageAction;
@@ -21,6 +23,7 @@ import com.atlassian.jira.plugin.issuetabpanel.AbstractIssueTabPanel;
 import com.atlassian.jira.plugin.issuetabpanel.IssueAction;
 import com.atlassian.jira.security.PermissionManager;
 import com.atlassian.jira.security.Permissions;
+import com.atlassian.jira.ComponentManager;
 
 import com.atlassian.crowd.embedded.api.User;
 import com.xiplink.jira.git.MultipleGitRepositoryManager;
@@ -40,8 +43,24 @@ public class GitRevisionsTabPanel extends AbstractIssueTabPanel {
         try {
             RevisionIndexer revisionIndexer = multipleGitRepositoryManager.getRevisionIndexer();
 
+            // get previous jira issues 
+
+            // use this sine 6.1
+            //IssueManager issueManager = ComponentManager.getInstance().getIssueManager();
+            //Set<String> otherKeys = issueManager.getAllIssueKeys(issue.getId());
+            
+            ChangeHistoryManager historyManager = ComponentManager.getInstance().getChangeHistoryManager();
+            Collection<String> otherKeys = historyManager.getPreviousIssueKeys(issue.getId());
+
             revisionIndexer.updateIndex();
 			List<RevisionInfo> logEntries = revisionIndexer.getLogEntriesByRepository(issue);
+
+            // read entries fore previous keys
+            for (String key : otherKeys)
+            {
+                logEntries.addAll(revisionIndexer.getLogEntriesByRepository(key));
+                log.debug("Got other key " + issue.getKey());
+            }
 
 			// This is a bit of a hack to get the error message across
             if (logEntries == null) {
